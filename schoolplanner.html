@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schoolplanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:        #F5F7FA;
+  --surface:   #FFFFFF;
+  --surface2:  #F0F3FA;
+  --ink:       #111827;
+  --ink2:      #374151;
+  --ink3:      #9CA3AF;
+  --border:    #E5E9F2;
+  --accent:    #2563EB;
+  --accent-bg: #EFF4FF;
+  --accent2:   #7C3AED;
+  --today-ring:#F59E0B;
+  --radius:    14px;
+  --radius-sm: 8px;
+  --shadow:    0 2px 12px rgba(17,24,39,.06);
+  --shadow-md: 0 4px 24px rgba(17,24,39,.10);
+  --shadow-lg: 0 12px 48px rgba(17,24,39,.15);
+
+  /* Event type colors */
+  --ct-les:       #2563EB;
+  --ct-toets:     #DC2626;
+  --ct-leren:     #D97706;
+  --ct-opdracht:  #7C3AED;
+  --ct-inleveren: #059669;
+  --ct-vakantie:  #0891B2;
+  --ct-vrij:      #6B7280;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+h1,h2,h3,.hdr-title,.modal-title { font-family: 'Syne', sans-serif; }
+
+/* ── HEADER ── */
+header {
+  background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 55%, #2563EB 100%);
+  padding: 18px 36px 16px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  position: sticky; top: 0; z-index: 90;
+  box-shadow: 0 2px 20px rgba(15,23,42,.4);
+}
+.hdr-left { display: flex; flex-direction: column; gap: 2px; }
+.hdr-eyebrow { font-size: .65rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.45); font-family: 'DM Sans', sans-serif; }
+.hdr-title { font-size: clamp(1.3rem,2.5vw,1.8rem); font-weight: 800; color: #fff; line-height: 1; letter-spacing: -.5px; }
+.hdr-title span { color: #93C5FD; }
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hdr-badge { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); border-radius: 20px; padding: 4px 12px; font-size: .68rem; font-weight: 600; color: rgba(255,255,255,.8); font-family: 'DM Sans', sans-serif; }
+
+/* ── SYNC BAR ── */
+.sync-bar { display: none; align-items: center; gap: 8px; background: var(--surface); border-bottom: 1px solid var(--border); padding: 7px 36px; font-size: .72rem; font-weight: 500; color: var(--ink3); }
+.sync-bar.visible { display: flex; }
+.sync-bar.error { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
+.sync-bar.success { background: #F0FDF4; border-color: #BBF7D0; color: #16A34A; }
+.sync-spinner { width: 13px; height: 13px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── CONTROLS ── */
+.controls {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 9px 36px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  box-shadow: var(--shadow); position: sticky; top: 68px; z-index: 80;
+}
+
+/* Year filter tabs */
+.year-tabs { display: flex; gap: 4px; align-items: center; }
+.year-tab { font-family: 'DM Sans', sans-serif; font-size: .72rem; font-weight: 600; padding: 5px 13px; border-radius: 20px; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink3); transition: all .15s; white-space: nowrap; }
+.year-tab:hover { border-color: var(--accent); color: var(--accent); }
+.year-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+
+.ctrl-divider { width: 1px; height: 22px; background: var(--border); }
+
+/* Legend */
+.legend { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.leg-lbl { font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); white-space: nowrap; }
+.leg { display: flex; align-items: center; gap: 3px; font-size: .67rem; font-weight: 600; padding: 3px 8px 3px 5px; border-radius: 20px; background: var(--surface2); border: 1.5px solid var(--border); white-space: nowrap; cursor: default; }
+.leg .sq { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+
+.ctrl-r { margin-left: auto; display: flex; gap: 7px; }
+
+button { font-family: 'DM Sans', sans-serif; font-size: .74rem; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--ink2); transition: all .15s; }
+button:hover { background: var(--surface2); border-color: var(--ink3); color: var(--ink); }
+button.pri { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+button.pri:hover { background: #1D4ED8; border-color: #1D4ED8; }
+button.sec { background: var(--accent-bg); color: var(--accent); border-color: rgba(37,99,235,.2); }
+button.sec:hover { background: #DBEAFE; }
+button.danger { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+button.danger:hover { background: #FEE2E2; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── PLANNER ── */
+.planner { padding: 20px 36px 100px; overflow-x: auto; }
+
+.year-sep { display: flex; align-items: center; gap: 14px; margin: 36px 0 6px; }
+.year-sep:first-child { margin-top: 0; }
+.year-sep-name { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--ink); white-space: nowrap; letter-spacing: -.5px; }
+.year-sep-pill { background: var(--accent-bg); color: var(--accent); font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; }
+.year-sep-line { flex: 1; height: 1px; background: var(--border); }
+
+.month-sep { display: flex; align-items: center; gap: 10px; margin: 20px 0 8px; }
+.month-sep-name { font-family: 'Syne', sans-serif; font-size: .9rem; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+.month-sep-line { flex: 1; height: 1px; background: var(--border); }
+
+.wk-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 8px; min-width: 900px; border: 1px solid var(--border); transition: box-shadow .2s; }
+.wk-card:hover { box-shadow: var(--shadow-md); }
+.wk-card.today-week { border-color: var(--today-ring); box-shadow: 0 0 0 2px rgba(245,158,11,.25), var(--shadow); }
+
+.wk-hdr-row { display: grid; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.wk-num-cell { padding: 9px 12px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+.wk-badge { background: var(--accent); color: #fff; font-size: .62rem; font-weight: 800; letter-spacing: .06em; padding: 2px 7px; border-radius: 5px; display: inline-block; font-family: 'Syne', sans-serif; }
+.wk-badge.today-wk { background: var(--today-ring); }
+.wk-sub { font-size: .56rem; font-weight: 500; color: var(--ink3); margin-top: 3px; letter-spacing: .04em; text-transform: uppercase; }
+
+.day-hdr { padding: 7px 3px 6px; text-align: center; border-left: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.day-hdr.wknd { background: rgba(156,163,175,.07); }
+.day-hdr.new-mo { border-left: 2px solid var(--accent); }
+.day-hdr.is-today { background: rgba(245,158,11,.08); }
+.dh-dow { font-size: .55rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
+.dh-num { font-size: .9rem; font-weight: 800; color: var(--ink); line-height: 1.2; margin-top: 1px; font-family: 'Syne', sans-serif; }
+.day-hdr.wknd .dh-num { color: #9CA3AF; }
+.day-hdr.is-today .dh-num { color: var(--today-ring); }
+.dh-mo { font-size: .52rem; font-weight: 700; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin-top: 2px; background: var(--accent-bg); padding: 1px 4px; border-radius: 3px; }
+.today-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--today-ring); margin-top: 2px; }
+
+.subject-row { display: grid; border-top: 1px solid var(--border); align-items: stretch; }
+.row-lbl { padding: 7px 12px; font-size: .72rem; font-weight: 700; display: flex; align-items: flex-start; gap: 5px; border-right: 1px solid var(--border); background: var(--surface2); white-space: nowrap; padding-top: 9px; font-family: 'DM Sans', sans-serif; min-width: 0; overflow: hidden; }
+.row-lbl-text { overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+.color-pip { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; margin-top: 1px; }
+
+.cell { border-left: 1px solid var(--border); cursor: pointer; padding: 3px 2px; display: flex; flex-direction: column; gap: 2px; min-height: 40px; position: relative; transition: background .12s; }
+.cell.wknd { background: rgba(156,163,175,.04); }
+.cell.new-mo { border-left: 2px solid rgba(37,99,235,.2); }
+.cell.is-today { background: rgba(245,158,11,.04); }
+.cell:hover { background: var(--accent-bg) !important; }
+
+.chip { height: auto; flex-shrink: 0; border-radius: 4px; margin: 0 2px; padding: 2px 4px; display: flex; align-items: center; gap: 2px; overflow: hidden; transition: opacity .1s; }
+.chip.range-start { border-radius: 4px 2px 2px 4px; margin-right: 0; }
+.chip.range-mid   { border-radius: 2px; margin-left: 0; margin-right: 0; opacity: .8; }
+.chip.range-end   { border-radius: 2px 4px 4px 2px; margin-left: 0; }
+.chip.range-only  { border-radius: 4px; }
+.chip-icon { font-size: .58rem; line-height: 1; flex-shrink: 0; }
+.chip-lbl { font-size: .58rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62px; line-height: 1.3; font-family: 'DM Sans', sans-serif; }
+
+.cell-tooltip { display: none; position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; font-size: .67rem; font-weight: 500; padding: 6px 10px; border-radius: 8px; white-space: pre; pointer-events: none; z-index: 60; box-shadow: var(--shadow-md); line-height: 1.6; max-width: 220px; font-family: 'DM Sans', sans-serif; }
+.cell-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: var(--ink); }
+.cell:hover .cell-tooltip { display: block; }
+
+/* ── SUBJECTS MANAGER ── */
+.subjects-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 95vw);
+  background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: -8px 0 40px rgba(17,24,39,.12);
+  z-index: 300; transform: translateX(100%); transition: transform .3s cubic-bezier(.4,0,.2,1);
+  display: flex; flex-direction: column;
+}
+.subjects-panel.open { transform: translateX(0); }
+.sp-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.sp-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 800; }
+.sp-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.sp-footer { padding: 14px 20px; border-top: 1px solid var(--border); }
+
+.subject-item { display: flex; align-items: center; gap: 8px; padding: 9px 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 7px; }
+.subject-color-swatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; cursor: pointer; border: 2px solid rgba(0,0,0,.1); }
+.subject-name-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 600; border: none; background: transparent; color: var(--ink); outline: none; }
+.subject-name-input:focus { color: var(--accent); }
+.subject-del { background: none; border: none; color: var(--ink3); font-size: .75rem; cursor: pointer; padding: 3px 6px; border-radius: 5px; transition: all .12s; }
+.subject-del:hover { color: #EF4444; background: #FEE2E2; }
+
+.add-subject-row { display: flex; gap: 7px; margin-top: 8px; }
+.add-subject-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 500; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 11px; background: var(--surface); color: var(--ink); outline: none; transition: border-color .15s; }
+.add-subject-input:focus { border-color: var(--accent); }
+
+/* Color picker for subjects */
+.color-options { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding: 10px; background: var(--surface2); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.color-opt { width: 22px; height: 22px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: transform .1s, border-color .1s; }
+.color-opt:hover { transform: scale(1.2); }
+.color-opt.selected { border-color: var(--ink); }
+
+/* Custom labels section */
+.custom-labels-section { margin-top: 20px; }
+.sl-title { font-family: 'Syne', sans-serif; font-size: .8rem; font-weight: 700; margin-bottom: 10px; color: var(--ink2); }
+.custom-label-item { display: flex; align-items: center; gap: 7px; padding: 8px 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 6px; }
+.cl-swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; cursor: pointer; border: 1.5px solid rgba(0,0,0,.1); }
+.cl-name-input { flex: 1; font-family: 'DM Sans', sans-serif; font-size: .77rem; font-weight: 600; border: none; background: transparent; color: var(--ink); outline: none; }
+.cl-name-input:focus { color: var(--accent); }
+.cl-del { background: none; border: none; color: var(--ink3); font-size: .75rem; cursor: pointer; padding: 2px 5px; border-radius: 4px; }
+.cl-del:hover { color: #EF4444; background: #FEE2E2; }
+
+/* ── MODAL ── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(17,24,39,.45); backdrop-filter: blur(6px); z-index: 200; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 20px; padding: 24px 26px; width: min(540px, 95vw); box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+.modal-title { font-size: 1rem; font-weight: 800; line-height: 1.2; color: var(--ink); }
+.modal-date { font-size: .71rem; font-weight: 400; color: var(--ink3); margin-top: 2px; }
+.modal-subj { font-size: .72rem; font-weight: 700; margin-top: 3px; }
+.modal-close { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 5px 9px; font-size: .85rem; cursor: pointer; color: var(--ink2); line-height: 1; flex-shrink: 0; }
+.modal-close:hover { background: #FEE2E2; border-color: #FCA5A5; color: #EF4444; }
+
+.sect-lbl { font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); margin-bottom: 6px; }
+
+.event-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.event-item { display: flex; align-items: flex-start; gap: 9px; padding: 9px 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: .77rem; }
+.ev-pip { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; margin-top: 3px; }
+.ev-info { flex: 1; }
+.ev-who { font-weight: 700; color: var(--ink); font-size: .77rem; }
+.ev-sub { color: var(--ink3); font-size: .69rem; margin-top: 1px; }
+.ev-edit { background: none; border: none; color: var(--ink3); font-size: .78rem; cursor: pointer; padding: 2px 5px; border-radius: 4px; transition: all .12s; }
+.ev-edit:hover { color: var(--accent); background: var(--accent-bg); }
+.ev-del { background: none; border: none; color: var(--ink3); font-size: .78rem; cursor: pointer; padding: 2px 5px; border-radius: 4px; transition: all .12s; }
+.ev-del:hover { color: #EF4444; background: #FEE2E2; }
+.empty-note { font-size: .74rem; color: var(--ink3); font-style: italic; padding: 4px 0 10px; }
+
+.add-form { background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.subject-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+.scheck { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: var(--radius-sm); cursor: pointer; border: 1.5px solid var(--border); font-size: .74rem; font-weight: 600; background: var(--surface); transition: all .12s; user-select: none; }
+.scheck input { display: none; }
+.sc-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.scheck.checked { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+
+.form-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 9px; }
+.form-group { display: flex; flex-direction: column; }
+.form-group.grow { flex: 1; min-width: 100px; }
+.form-group label { font-size: .65rem; font-weight: 700; color: var(--ink3); margin-bottom: 3px; letter-spacing: .04em; }
+
+select, input[type="date"], input[type="text"] { font-family: 'DM Sans', sans-serif; font-size: .76rem; font-weight: 500; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 7px 9px; background: var(--surface); color: var(--ink); width: 100%; transition: border-color .15s; }
+select:focus, input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+
+.radio-row { display: flex; gap: 4px; margin-bottom: 9px; flex-wrap: wrap; }
+.rtab { padding: 5px 11px; border-radius: var(--radius-sm); cursor: pointer; border: 1.5px solid var(--border); font-size: .7rem; font-weight: 700; transition: all .12s; background: var(--surface); color: var(--ink2); font-family: 'DM Sans', sans-serif; }
+.rtab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+
+/* ── EXPORT BAR ── */
+.export-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,.94); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: 10px 36px; display: flex; align-items: center; gap: 12px; z-index: 100; box-shadow: 0 -4px 20px rgba(17,24,39,.07); }
+.export-bar span { color: var(--ink3); font-size: .71rem; }
+
+/* ── LOGIN SCREEN ── */
+.login-screen { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(145deg, #0F172A 0%, #1E3A5F 50%, #1E40AF 100%); }
+.login-screen.visible { display: flex; }
+.login-card { background: rgba(255,255,255,.97); border-radius: 24px; padding: 46px 42px 42px; width: min(400px, 100%); box-shadow: 0 24px 64px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.5); text-align: center; }
+.login-logo { width: 68px; height: 68px; background: linear-gradient(135deg, #1E3A5F, #2563EB); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; box-shadow: 0 8px 24px rgba(37,99,235,.4); }
+.login-logo-icon { font-size: 1.9rem; line-height: 1; }
+.login-eyebrow { font-size: .67rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; font-family: 'DM Sans', sans-serif; }
+.login-title { font-size: 1.9rem; font-weight: 800; color: var(--ink); line-height: 1; letter-spacing: -1px; margin-bottom: 8px; }
+.login-title span { color: var(--accent); }
+.login-sub { font-size: .82rem; color: var(--ink3); line-height: 1.6; margin-bottom: 26px; }
+.login-input-wrap { position: relative; margin-bottom: 11px; }
+.login-input-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: .95rem; pointer-events: none; }
+.login-input { width: 100%; font-family: 'DM Sans', sans-serif; font-size: .88rem; font-weight: 500; border: 2px solid var(--border); border-radius: 11px; padding: 12px 15px 12px 40px; background: var(--surface2); color: var(--ink); transition: all .2s; outline: none; letter-spacing: .06em; }
+.login-input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px rgba(37,99,235,.1); }
+.login-input.error { border-color: #EF4444; box-shadow: 0 0 0 4px rgba(239,68,68,.1); }
+.login-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, #1E3A5F, #2563EB); color: #fff; border: none; padding: 13px 22px; border-radius: 11px; font-size: .88rem; font-weight: 700; cursor: pointer; letter-spacing: .02em; box-shadow: 0 4px 16px rgba(37,99,235,.4); transition: all .2s; margin-bottom: 12px; font-family: 'DM Sans', sans-serif; }
+.login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(37,99,235,.45); }
+.login-btn:active { transform: translateY(0); }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(3px)} }
+.login-input.shake { animation: shake .4s ease; }
+.login-error { display: none; font-size: .74rem; font-weight: 500; color: #DC2626; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 7px; padding: 7px 11px; margin-top: 3px; }
+
+/* ── PRINT ── */
+@media print {
+  .export-bar,.ctrl-r,.controls,.subjects-panel,button,.sync-bar,.overlay { display: none !important; }
+  body { background: white; }
+  .planner { padding: 10px; }
+  .wk-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+  header { position: static; background: #0F172A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  header { padding: 12px 14px 10px; }
+  .hdr-title { font-size: 1.3rem; }
+  .hdr-badge { display: none; }
+  .controls { padding: 7px 10px; gap: 8px; top: 56px; overflow-x: auto; flex-wrap: nowrap; }
+  .year-tabs { flex-shrink: 0; }
+  .legend { display: none; }
+  .ctrl-r { flex-shrink: 0; }
+  .planner { padding: 10px 6px 80px; }
+  .wk-card { min-width: unset; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; }
+  .wk-hdr-row, .subject-row { min-width: 320px; }
+  .overlay { align-items: flex-end; }
+  .modal { border-radius: 20px 20px 0 0; width: 100%; max-height: 88vh; padding: 18px 16px; }
+  .export-bar { padding: 9px 14px; flex-direction: column; align-items: stretch; gap: 5px; }
+  .export-bar span { display: none; }
+  .export-bar button { width: 100%; justify-content: center; }
+  .login-card { padding: 32px 22px 28px; }
+  .login-title { font-size: 1.6rem; }
+  .cell-tooltip { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-left">
+    <div class="hdr-eyebrow">Schoolplanner</div>
+    <div class="hdr-title" id="hdr-title-el">School <span id="hdr-years">2025–2029</span></div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-badge" id="hdr-badge">apr 2026 – okt 2029</div>
+  </div>
+</header>
+
+<div class="sync-bar" id="sync-bar">
+  <div class="sync-spinner" id="sync-spinner"></div>
+  <span id="sync-msg">Laden…</span>
+</div>
+
+<!-- Controls -->
+<div class="controls" id="controls" style="display:none">
+  <div class="year-tabs" id="year-tabs"></div>
+  <div class="ctrl-divider"></div>
+  <div class="legend" id="legend"></div>
+  <div class="ctrl-r">
+    <button class="sec" onclick="jumpToToday()">⊙ Vandaag</button>
+    <button onclick="openSubjectsPanel()">✏️ Vakken</button>
+    <button class="pri" onclick="window.print()">⬇ PDF</button>
+  </div>
+</div>
+
+<!-- Login screen -->
+<div class="login-screen visible" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><div class="login-logo-icon">📚</div></div>
+    <div class="login-eyebrow">Schoolplanner</div>
+    <h2 class="login-title">Mijn <span>Planning</span></h2>
+    <p class="login-sub">Voer je leerlingcode in om je schoolplanning te bekijken en bij te werken.</p>
+    <div class="login-input-wrap">
+      <div class="login-input-icon">🔑</div>
+      <input type="password" id="code-input" class="login-input" placeholder="Leerlingcode invoeren…">
+    </div>
+    <button class="login-btn" id="login-btn">
+      Doorgaan
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div id="code-error" class="login-error">Onjuiste code — controleer je leerlingcode 🔒</div>
+  </div>
+</div>
+
+<!-- Planner grid -->
+<div class="planner" id="planner" style="display:none"></div>
+
+<!-- Modal -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Dag invullen</div>
+        <div class="modal-date" id="modal-date"></div>
+        <div class="modal-subj" id="modal-subj"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="sect-lbl">Ingepland</div>
+    <div class="event-list" id="event-list"></div>
+    <div class="add-form">
+      <div class="sect-lbl add-form-title" id="add-form-title" style="margin-bottom:10px">Nieuw toevoegen</div>
+      <div class="sect-lbl" style="font-size:.58rem;margin-bottom:5px">Vak</div>
+      <div class="subject-checks" id="subject-checks"></div>
+      <div class="form-row">
+        <div class="form-group grow">
+          <label>Type / Label</label>
+          <select id="ev-type"></select>
+        </div>
+        <div class="form-group grow">
+          <label>Notitie (optioneel)</label>
+          <input type="text" id="ev-note" placeholder="bijv. H4 t/m H6">
+        </div>
+      </div>
+      <div class="sect-lbl" style="font-size:.58rem;margin-bottom:5px">Periode</div>
+      <div class="radio-row">
+        <div class="rtab active" id="tab-single" onclick="setMode('single')">Één dag</div>
+        <div class="rtab" id="tab-range" onclick="setMode('range')">Meerdere dagen</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group grow">
+          <label id="start-lbl">Datum</label>
+          <input type="date" id="ev-start">
+        </div>
+        <div class="form-group grow" id="end-wrap" style="display:none">
+          <label>Einddatum</label>
+          <input type="date" id="ev-end">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <button id="btn-cancel-edit" style="display:none" onclick="cancelEdit()">✕ Annuleren</button>
+        <button class="pri" id="btn-add" onclick="addEvent()" style="padding:7px 16px;margin-left:auto">+ Toevoegen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Subjects panel -->
+<div class="subjects-panel" id="subjects-panel">
+  <div class="sp-header">
+    <div class="sp-title">Vakken & Labels</div>
+    <button onclick="closeSubjectsPanel()" style="padding:5px 9px;font-size:.85rem">✕</button>
+  </div>
+  <div class="sp-body">
+    <div class="sect-lbl" style="margin-bottom:8px">Vakken</div>
+    <div id="subject-list"></div>
+    <div class="add-subject-row">
+      <input type="text" id="new-subject-name" class="add-subject-input" placeholder="Nieuw vak…" onkeydown="if(event.key==='Enter')addSubject()">
+      <button class="pri" onclick="addSubject()">+ Voeg toe</button>
+    </div>
+
+    <div class="custom-labels-section">
+      <div class="sl-title">Eigen labels</div>
+      <div class="sect-lbl" style="font-size:.58rem;margin-bottom:8px">Naast de standaard types kun je eigen labels aanmaken</div>
+      <div id="custom-label-list"></div>
+      <div class="add-subject-row">
+        <input type="text" id="new-label-name" class="add-subject-input" placeholder="Nieuw label…" onkeydown="if(event.key==='Enter')addCustomLabel()">
+        <button class="pri" onclick="addCustomLabel()">+ Voeg toe</button>
+      </div>
+    </div>
+  </div>
+  <div class="sp-footer">
+    <button class="pri" style="width:100%" onclick="closeSubjectsPanel()">✓ Klaar</button>
+  </div>
+</div>
+
+<div class="export-bar" id="export-bar" style="display:none">
+  <button class="pri" onclick="window.print()">📄 Opslaan als PDF</button>
+  <span>Kies "Opslaan als PDF" in het printdialoog</span>
+</div>
+
+<script src="config.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  ⚙️  CONFIG — ingeladen via config.js
+// ══════════════════════════════════════════════════════════════════
+const CONFIG = window.SP_CONFIG || {};
+
+// ── CALENDAR CONSTANTS ───────────────────────────────────────────
+const TODAY       = new Date();
+const TODAY_STR   = dateStr(TODAY);
+const MONTHS_NL   = ['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const MONTHS_S    = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+const DAYS_NL     = ['zo','ma','di','wo','do','vr','za'];
+
+// 3.5 years from current month
+const START_DATE  = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+const END_DATE    = new Date(START_DATE.getFullYear(), START_DATE.getMonth() + 42, 0); // +42 months
+
+// ── DEFAULT SUBJECTS ─────────────────────────────────────────────
+const DEFAULT_SUBJECT_COLORS = [
+  '#2563EB','#DC2626','#D97706','#7C3AED','#059669','#0891B2',
+  '#DB2777','#EA580C','#65A30D','#0284C7','#9333EA','#0D9488'
+];
+
+// ── BUILT-IN EVENT TYPES ──────────────────────────────────────────
+const BUILTIN_TYPES = [
+  { value:'les',       label:'Les',        icon:'📖', color:'#2563EB' },
+  { value:'toets',     label:'Toets',      icon:'📝', color:'#DC2626' },
+  { value:'leren',     label:'Leren',      icon:'🧠', color:'#D97706' },
+  { value:'opdracht',  label:'Opdracht',   icon:'✏️',  color:'#7C3AED' },
+  { value:'inleveren', label:'Inleveren',  icon:'📤', color:'#059669' },
+  { value:'vakantie',  label:'Vakantie',   icon:'🌴', color:'#0891B2' },
+  { value:'vrij',      label:'Vrij',       icon:'☀️',  color:'#6B7280' },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────
+let subjects      = [];   // [{id, name, color}]
+let customLabels  = [];   // [{id, name, color}]
+let events        = [];   // [{id, subjectIds[], type, note, start, end}]
+let activeYear    = 'all';
+let modalDate     = null;
+let inputMode     = 'single';
+let editingId     = null;
+let saveTimer     = null;
+let colorPickTarget = null; // {type:'subject'|'label', id}
+
+// ── SCHOOL YEARS ─────────────────────────────────────────────────
+function getSchoolYears() {
+  const years = [];
+  let y = START_DATE.getFullYear();
+  // Start from school year that contains START_DATE
+  if (START_DATE.getMonth() < 8) y--; // before september → previous school year
+  while (true) {
+    const syStart = new Date(y, 8, 1);   // Sept 1
+    const syEnd   = new Date(y+1, 7, 31); // Aug 31
+    if (syStart > END_DATE) break;
+    years.push({ label: `${y}/${y+1}`, start: syStart, end: syEnd, key: `${y}` });
+    y++;
+  }
+  return years;
+}
+
+// ── WEEKS IN RANGE ────────────────────────────────────────────────
+function getWeeksInRange(from, to) {
+  // find Monday of the week containing 'from'
+  const start = new Date(from);
+  const dow = start.getDay() || 7;
+  start.setDate(start.getDate() - dow + 1);
+
+  const weeks = [];
+  const cur = new Date(start);
+  while (cur <= to) {
+    const mon = new Date(cur);
+    weeks.push(mon);
+    cur.setDate(cur.getDate() + 7);
+  }
+  return weeks;
+}
+
+// ── SERVER SYNC ───────────────────────────────────────────────────
+async function loadFromServer() {
+  showSync('Planning laden…', 'loading');
+  try {
+    const res = await fetch('/.netlify/functions/planning', {
+      method: 'GET',
+      headers: { 'X-Family-Code': CONFIG.schoolCode }
+    });
+    if (res.status === 401) { showSync('Ongeldige leerlingcode.', 'error'); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    events       = Array.isArray(data.events)       ? data.events       : [];
+    subjects     = Array.isArray(data.subjects)     ? data.subjects     : getDefaultSubjects();
+    customLabels = Array.isArray(data.customLabels) ? data.customLabels : [];
+    hideSync();
+    render();
+    buildYearTabs();
+    buildLegend();
+    renderSubjectPanel();
+    renderCustomLabelPanel();
+  } catch(e) {
+    showSync('Laden mislukt: ' + e.message, 'error');
+    // Use defaults so planner is usable offline
+    if (!subjects.length) subjects = getDefaultSubjects();
+    hideSync();
+    render(); buildYearTabs(); buildLegend(); renderSubjectPanel(); renderCustomLabelPanel();
+  }
+}
+
+function persist() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToServer, 800);
+}
+
+async function saveToServer() {
+  showSync('Opslaan…', 'loading');
+  try {
+    const payload = { events, subjects, customLabels, savedAt: new Date().toISOString() };
+    const res = await fetch('/.netlify/functions/planning', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Family-Code': CONFIG.schoolCode },
+      body: JSON.stringify(payload),
+    });
+    if (res.status === 401) { showSync('Ongeldige leerlingcode.', 'error'); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    showSync('✓ Planning opgeslagen', 'success');
+    setTimeout(hideSync, 2500);
+  } catch(e) {
+    showSync('Opslaan mislukt: ' + e.message, 'error');
+  }
+}
+
+function showSync(msg, type) {
+  const bar = document.getElementById('sync-bar');
+  const spinner = document.getElementById('sync-spinner');
+  bar.className = 'sync-bar visible' + (type==='error'?' error':type==='success'?' success':'');
+  spinner.style.display = type==='loading' ? '' : 'none';
+  document.getElementById('sync-msg').textContent = msg;
+}
+function hideSync() { document.getElementById('sync-bar').className = 'sync-bar'; }
+
+// ── DEFAULT SUBJECTS ──────────────────────────────────────────────
+function getDefaultSubjects() {
+  return [
+    { id: uid(), name: 'Nederlands',    color: '#2563EB' },
+    { id: uid(), name: 'Wiskunde',      color: '#DC2626' },
+    { id: uid(), name: 'Engels',        color: '#059669' },
+  ];
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function dateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function parseDate(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function uid() { return Math.random().toString(36).slice(2,9); }
+function fmtShort(s) { const d=parseDate(s); return `${d.getDate()} ${MONTHS_S[d.getMonth()]}`; }
+function getISOWeek(d) { const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7)); const ys=new Date(Date.UTC(date.getUTCFullYear(),0,1)); return Math.ceil((((date-ys)/86400000)+1)/7); }
+function eventsOnDate(ds) { return events.filter(ev=>ev.start<=ds&&ev.end>=ds); }
+function chipClass(ev,ds) { if(ev.start===ev.end)return'range-only'; if(ev.start===ds)return'range-start'; if(ev.end===ds)return'range-end'; return'range-mid'; }
+function allTypes() {
+  const bt = BUILTIN_TYPES.map(t=>({...t}));
+  const cl = customLabels.map(l=>({ value:'cl_'+l.id, label:l.name, icon:'🏷️', color:l.color }));
+  return [...bt, ...cl];
+}
+function typeColor(tval) { return allTypes().find(t=>t.value===tval)?.color || '#888'; }
+function typeLabel(tval) { return allTypes().find(t=>t.value===tval)?.label || tval; }
+function typeIcon(tval)  { return allTypes().find(t=>t.value===tval)?.icon  || '•'; }
+
+// ── YEAR TABS ─────────────────────────────────────────────────────
+function buildYearTabs() {
+  const container = document.getElementById('year-tabs');
+  container.innerHTML = '';
+
+  const allBtn = document.createElement('div');
+  allBtn.className = 'year-tab' + (activeYear==='all'?' active':'');
+  allBtn.textContent = 'Alles';
+  allBtn.onclick = () => { activeYear='all'; updateYearTabs(); render(); };
+  container.appendChild(allBtn);
+
+  getSchoolYears().forEach(sy => {
+    const btn = document.createElement('div');
+    btn.className = 'year-tab' + (activeYear===sy.key?' active':'');
+    btn.textContent = sy.label;
+    btn.dataset.key = sy.key;
+    btn.onclick = () => { activeYear=sy.key; updateYearTabs(); render(); };
+    container.appendChild(btn);
+  });
+}
+
+function updateYearTabs() {
+  document.querySelectorAll('.year-tab').forEach(t => {
+    const isAll = t.textContent === 'Alles';
+    t.classList.toggle('active', isAll ? activeYear==='all' : t.dataset.key===activeYear);
+  });
+}
+
+// ── LEGEND ────────────────────────────────────────────────────────
+function buildLegend() {
+  const container = document.getElementById('legend');
+  container.innerHTML = '<span class="leg-lbl">Type</span>';
+  BUILTIN_TYPES.slice(0,6).forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'leg';
+    el.innerHTML = `<div class="sq" style="background:${t.color}"></div>${t.label}`;
+    container.appendChild(el);
+  });
+}
+
+// ── JUMP TO TODAY ─────────────────────────────────────────────────
+function jumpToToday() {
+  // If filtered to a year that doesn't contain today, switch to all
+  if (activeYear !== 'all') {
+    const sy = getSchoolYears().find(s=>s.key===activeYear);
+    if (sy && (TODAY < sy.start || TODAY > sy.end)) {
+      activeYear = 'all';
+      updateYearTabs();
+      render();
+    }
+  }
+  setTimeout(() => {
+    const el = document.getElementById('today-anchor');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('planner');
+  container.innerHTML = '';
+
+  if (!subjects.length) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink3);font-size:.9rem">Voeg eerst vakken toe via de knop <strong>✏️ Vakken</strong> rechtsboven.</div>';
+    return;
+  }
+
+  // Determine date range
+  let fromDate = START_DATE;
+  let toDate   = END_DATE;
+
+  if (activeYear !== 'all') {
+    const sy = getSchoolYears().find(s=>s.key===activeYear);
+    if (sy) { fromDate = sy.start; toDate = sy.end; }
+  }
+
+  // Clamp to planner range
+  if (fromDate < START_DATE) fromDate = START_DATE;
+  if (toDate   > END_DATE)   toDate   = END_DATE;
+
+  const weeks = getWeeksInRange(fromDate, toDate);
+
+  // Compute column count (label col + 7 days)
+  const cols = `108px repeat(7, 1fr)`;
+
+  let lastYearKey = null;
+  let lastMonth   = null;
+
+  weeks.forEach(monday => {
+    const days    = Array.from({length:7},(_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
+    const dayStrs = days.map(d=>dateStr(d));
+
+    // Skip weeks entirely outside range
+    if (days[6] < fromDate || days[0] > toDate) return;
+
+    const wkNum   = getISOWeek(monday);
+    const repDay  = days[3]; // Wednesday for month/year label
+    const repMonth = repDay.getMonth();
+    const repYear  = repDay.getFullYear();
+
+    // School year separator
+    const schoolYear = repDay.getMonth() >= 8 ? repDay.getFullYear() : repDay.getFullYear()-1;
+    const syKey = `${schoolYear}`;
+
+    if (syKey !== lastYearKey) {
+      lastYearKey = syKey;
+      const sep = document.createElement('div');
+      sep.className = 'year-sep';
+      sep.innerHTML = `<div class="year-sep-name">${schoolYear}–${schoolYear+1}</div><div class="year-sep-pill">Schooljaar</div><div class="year-sep-line"></div>`;
+      container.appendChild(sep);
+      lastMonth = null; // reset month after year sep
+    }
+
+    // Month separator
+    const monthKey = `${repYear}-${repMonth}`;
+    if (monthKey !== lastMonth) {
+      lastMonth = monthKey;
+      const sep = document.createElement('div');
+      sep.className = 'month-sep';
+      sep.innerHTML = `<div class="month-sep-name">${MONTHS_NL[repMonth][0].toUpperCase()+MONTHS_NL[repMonth].slice(1)} ${repYear}</div><div class="month-sep-line"></div>`;
+      container.appendChild(sep);
+    }
+
+    // Check if this week contains today
+    const isThisWeek = days.some(d=>dateStr(d)===TODAY_STR);
+
+    const card = document.createElement('div');
+    card.className = 'wk-card' + (isThisWeek?' today-week':'');
+    card.style.gridTemplateColumns = cols;
+    if (isThisWeek) card.id = 'today-anchor';
+
+    // Header row
+    const hdrRow = document.createElement('div');
+    hdrRow.className = 'wk-hdr-row';
+    hdrRow.style.gridTemplateColumns = cols;
+    hdrRow.innerHTML = `<div class="wk-num-cell"><div class="wk-badge${isThisWeek?' today-wk':''}">WK ${wkNum}</div><div class="wk-sub">${fmtShort(dayStrs[0])} – ${fmtShort(dayStrs[6])}</div></div>`;
+
+    days.forEach(d => {
+      const dow = d.getDay();
+      const ds  = dateStr(d);
+      const isToday = ds === TODAY_STR;
+      const isNewMo = d.getDate() === 1;
+      hdrRow.innerHTML += `<div class="day-hdr${(dow===0||dow===6)?' wknd':''}${isNewMo?' new-mo':''}${isToday?' is-today':''}">
+        <span class="dh-dow">${DAYS_NL[dow]}</span>
+        <span class="dh-num">${d.getDate()}</span>
+        ${isNewMo?`<span class="dh-mo">${MONTHS_S[d.getMonth()]}</span>`:''}
+        ${isToday?'<div class="today-dot"></div>':''}
+      </div>`;
+    });
+    card.appendChild(hdrRow);
+
+    // Subject rows
+    subjects.forEach(subj => {
+      const row = document.createElement('div');
+      row.className = 'subject-row';
+      row.style.gridTemplateColumns = cols;
+      row.innerHTML = `<div class="row-lbl"><div class="color-pip" style="background:${subj.color}"></div><span class="row-lbl-text" title="${subj.name}">${subj.name}</span></div>`;
+
+      days.forEach(d => {
+        const ds  = dateStr(d);
+        const dow = d.getDay();
+        const isToday = ds === TODAY_STR;
+        const isNewMo = d.getDate() === 1;
+        const cell = document.createElement('div');
+        cell.className = `cell${(dow===0||dow===6)?' wknd':''}${isNewMo?' new-mo':''}${isToday?' is-today':''}`;
+        cell.onclick = () => openModal(ds, subj.id);
+
+        const evs = eventsOnDate(ds).filter(ev => ev.subjectIds && ev.subjectIds.includes(subj.id));
+        const tips = [];
+
+        evs.forEach(ev => {
+          const chip = document.createElement('div');
+          const cc   = chipClass(ev, ds);
+          chip.className = `chip ${cc}`;
+          chip.style.background = typeColor(ev.type);
+
+          const icon  = typeIcon(ev.type);
+          const isFirstVisible = cc==='range-only' || cc==='range-start' || (cc==='range-mid' && ds===dayStrs[0]);
+          const lbl   = isFirstVisible ? (ev.note || typeLabel(ev.type)) : '';
+
+          chip.innerHTML = `<span class="chip-icon">${icon}</span>`
+            + (lbl ? `<span class="chip-lbl">${lbl}</span>` : '');
+
+          tips.push((ev.note||typeLabel(ev.type)) + (ev.start!==ev.end?` (${fmtShort(ev.start)}–${fmtShort(ev.end)})`:''));
+          cell.appendChild(chip);
+        });
+
+        if (tips.length) {
+          const tip = document.createElement('div');
+          tip.className = 'cell-tooltip';
+          tip.textContent = tips.join('\n');
+          cell.appendChild(tip);
+        }
+        row.appendChild(cell);
+      });
+
+      card.appendChild(row);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function openModal(ds, preselectedSubjId) {
+  modalDate = ds;
+  const d = parseDate(ds);
+  document.getElementById('modal-title').textContent = d.toLocaleDateString('nl-NL', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('modal-date').textContent  = `Week ${getISOWeek(d)}`;
+  document.getElementById('ev-start').value = ds;
+  document.getElementById('ev-end').value   = ds;
+  document.getElementById('ev-note').value  = '';
+  buildTypeSelect();
+  buildSubjectChecks(preselectedSubjId);
+  setMode('single');
+  refreshEventList();
+  document.getElementById('modal').classList.add('open');
+}
+
+function buildTypeSelect() {
+  const sel = document.getElementById('ev-type');
+  sel.innerHTML = '';
+  allTypes().forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.value;
+    opt.textContent = t.icon + ' ' + t.label;
+    sel.appendChild(opt);
+  });
+}
+
+function buildSubjectChecks(preselectedId) {
+  const wrap = document.getElementById('subject-checks');
+  wrap.innerHTML = '';
+  if (!subjects.length) {
+    wrap.innerHTML = '<div style="font-size:.73rem;color:var(--ink3);grid-column:1/-1">Geen vakken — voeg eerst vakken toe.</div>';
+    return;
+  }
+  subjects.forEach(s => {
+    const lbl = document.createElement('label');
+    lbl.className = 'scheck' + (s.id===preselectedId?' checked':'');
+    lbl.innerHTML = `<input type="checkbox" value="${s.id}"${s.id===preselectedId?' checked':''}><div class="sc-dot" style="background:${s.color}"></div>${s.name}`;
+    lbl.querySelector('input').addEventListener('change', () => lbl.classList.toggle('checked', lbl.querySelector('input').checked));
+    wrap.appendChild(lbl);
+  });
+}
+
+function refreshEventList() {
+  const list = document.getElementById('event-list');
+  const dayEvs = [...eventsOnDate(modalDate)].sort((a,b)=>a.start.localeCompare(b.start));
+  if (!dayEvs.length) { list.innerHTML = '<div class="empty-note">Nog niets ingepland.</div>'; return; }
+  list.innerHTML = '';
+  dayEvs.forEach(ev => {
+    const subjectNames = (ev.subjectIds||[]).map(sid => subjects.find(s=>s.id===sid)?.name||'?').join(', ');
+    const range = ev.start!==ev.end ? `${fmtShort(ev.start)} – ${fmtShort(ev.end)}` : '';
+    const item  = document.createElement('div');
+    item.className = 'event-item' + (editingId===ev.id?' editing-item':'');
+    item.innerHTML = `
+      <div class="ev-pip" style="background:${typeColor(ev.type)}"></div>
+      <div class="ev-info">
+        <div class="ev-who">${subjectNames} · <span style="font-weight:500;color:var(--ink2)">${typeLabel(ev.type)}</span></div>
+        <div class="ev-sub">${[ev.note,range].filter(Boolean).join(' · ')}</div>
+      </div>
+      <button class="ev-edit" onclick="startEdit('${ev.id}')" title="Bewerken">✏️</button>
+      <button class="ev-del"  onclick="deleteEvent('${ev.id}')" title="Verwijderen">✕</button>`;
+    list.appendChild(item);
+  });
+}
+
+function startEdit(id) {
+  const ev = events.find(e=>e.id===id);
+  if (!ev) return;
+  editingId = id;
+  document.getElementById('ev-type').value  = ev.type;
+  document.getElementById('ev-note').value  = ev.note || '';
+  document.getElementById('ev-start').value = ev.start;
+  document.getElementById('ev-end').value   = ev.end;
+  document.querySelectorAll('#subject-checks .scheck').forEach(lbl => {
+    const sid     = lbl.querySelector('input').value;
+    const checked = (ev.subjectIds||[]).includes(sid);
+    lbl.querySelector('input').checked = checked;
+    lbl.classList.toggle('checked', checked);
+  });
+  setMode(ev.start !== ev.end ? 'range' : 'single');
+  document.getElementById('add-form-title').textContent = 'Bewerken';
+  document.querySelector('.add-form').classList.add('editing');
+  document.getElementById('btn-add').textContent = '✓ Opslaan';
+  document.getElementById('btn-cancel-edit').style.display = '';
+  refreshEventList();
+  document.querySelector('.add-form').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function cancelEdit() {
+  editingId = null;
+  document.getElementById('add-form-title').textContent = 'Nieuw toevoegen';
+  document.querySelector('.add-form').classList.remove('editing');
+  document.getElementById('btn-add').textContent = '+ Toevoegen';
+  document.getElementById('btn-cancel-edit').style.display = 'none';
+  document.getElementById('ev-note').value  = '';
+  document.getElementById('ev-type').value  = BUILTIN_TYPES[0].value;
+  document.querySelectorAll('#subject-checks .scheck').forEach(l=>{l.querySelector('input').checked=false;l.classList.remove('checked');});
+  setMode('single');
+  refreshEventList();
+}
+
+function setMode(mode) {
+  inputMode = mode;
+  document.getElementById('tab-single').classList.toggle('active', mode==='single');
+  document.getElementById('tab-range').classList.toggle('active',  mode==='range');
+  document.getElementById('end-wrap').style.display  = mode==='range' ? '' : 'none';
+  document.getElementById('start-lbl').textContent   = mode==='range' ? 'Startdatum' : 'Datum';
+  if (mode==='single') document.getElementById('ev-end').value = document.getElementById('ev-start').value;
+}
+
+document.getElementById('ev-start').addEventListener('change', () => {
+  if (inputMode==='single') document.getElementById('ev-end').value = document.getElementById('ev-start').value;
+  if (document.getElementById('ev-end').value < document.getElementById('ev-start').value)
+    document.getElementById('ev-end').value = document.getElementById('ev-start').value;
+});
+
+function addEvent() {
+  const sids = [...document.querySelectorAll('#subject-checks .scheck input:checked')].map(i=>i.value);
+  if (!sids.length) { alert('Selecteer minimaal één vak.'); return; }
+  const type  = document.getElementById('ev-type').value;
+  const note  = document.getElementById('ev-note').value.trim();
+  const start = document.getElementById('ev-start').value;
+  const end   = inputMode==='range' ? document.getElementById('ev-end').value : start;
+  if (!start) { alert('Vul een datum in.'); return; }
+  if (end < start) { alert('Einddatum mag niet vóór de startdatum liggen.'); return; }
+
+  if (editingId) {
+    const idx = events.findIndex(e=>e.id===editingId);
+    if (idx > -1) events[idx] = { ...events[idx], subjectIds:sids, type, note, start, end };
+    cancelEdit();
+  } else {
+    events.push({ id:uid(), subjectIds:sids, type, note, start, end });
+    document.querySelectorAll('#subject-checks .scheck').forEach(l=>{l.querySelector('input').checked=false;l.classList.remove('checked');});
+    document.getElementById('ev-note').value = '';
+  }
+  persist(); render(); refreshEventList();
+}
+
+function deleteEvent(id) { events = events.filter(e=>e.id!==id); persist(); render(); refreshEventList(); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); modalDate=null; if(editingId) cancelEdit(); }
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target===document.getElementById('modal')) closeModal(); });
+
+// ── SUBJECTS PANEL ────────────────────────────────────────────────
+const PALETTE = [
+  '#2563EB','#DC2626','#D97706','#7C3AED','#059669','#0891B2',
+  '#DB2777','#EA580C','#65A30D','#0284C7','#9333EA','#0D9488',
+  '#1D4ED8','#B91C1C','#92400E','#6D28D9','#047857','#0E7490',
+];
+
+function openSubjectsPanel()  { document.getElementById('subjects-panel').classList.add('open'); }
+function closeSubjectsPanel() {
+  document.getElementById('subjects-panel').classList.remove('open');
+  persist(); render(); buildLegend(); buildYearTabs();
+}
+
+function renderSubjectPanel() {
+  const list = document.getElementById('subject-list');
+  list.innerHTML = '';
+  subjects.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'subject-item';
+    item.innerHTML = `
+      <div class="subject-color-swatch" style="background:${s.color}" title="Kleur wijzigen" onclick="openColorPicker(event,'subject','${s.id}')"></div>
+      <input class="subject-name-input" value="${s.name}" onchange="renameSubject('${s.id}', this.value)" placeholder="Vaknaam…">
+      <button class="subject-del" onclick="removeSubject('${s.id}')">✕</button>`;
+    list.appendChild(item);
+  });
+}
+
+function addSubject() {
+  const inp  = document.getElementById('new-subject-name');
+  const name = inp.value.trim();
+  if (!name) return;
+  const color = DEFAULT_SUBJECT_COLORS[subjects.length % DEFAULT_SUBJECT_COLORS.length];
+  subjects.push({ id:uid(), name, color });
+  inp.value = '';
+  renderSubjectPanel();
+}
+
+function renameSubject(id, val) {
+  const s = subjects.find(s=>s.id===id);
+  if (s) s.name = val.trim() || s.name;
+}
+
+function removeSubject(id) {
+  if (!confirm('Dit vak en alle bijbehorende events verwijderen?')) return;
+  subjects = subjects.filter(s=>s.id!==id);
+  events   = events.filter(ev=>!(ev.subjectIds||[]).every(sid=>sid===id));
+  renderSubjectPanel();
+}
+
+// ── CUSTOM LABELS ─────────────────────────────────────────────────
+function renderCustomLabelPanel() {
+  const list = document.getElementById('custom-label-list');
+  list.innerHTML = '';
+  if (!customLabels.length) {
+    list.innerHTML = '<div style="font-size:.72rem;color:var(--ink3);padding:4px 0 8px;font-style:italic">Nog geen eigen labels.</div>';
+    return;
+  }
+  customLabels.forEach(cl => {
+    const item = document.createElement('div');
+    item.className = 'custom-label-item';
+    item.innerHTML = `
+      <div class="cl-swatch" style="background:${cl.color}" title="Kleur wijzigen" onclick="openColorPicker(event,'label','${cl.id}')"></div>
+      <input class="cl-name-input" value="${cl.name}" onchange="renameLabel('${cl.id}', this.value)" placeholder="Labelnaam…">
+      <button class="cl-del" onclick="removeCustomLabel('${cl.id}')">✕</button>`;
+    list.appendChild(item);
+  });
+}
+
+function addCustomLabel() {
+  const inp  = document.getElementById('new-label-name');
+  const name = inp.value.trim();
+  if (!name) return;
+  const color = PALETTE[(customLabels.length + 6) % PALETTE.length];
+  customLabels.push({ id:uid(), name, color });
+  inp.value = '';
+  renderCustomLabelPanel();
+}
+
+function renameLabel(id, val) {
+  const cl = customLabels.find(c=>c.id===id);
+  if (cl) cl.name = val.trim() || cl.name;
+}
+
+function removeCustomLabel(id) {
+  customLabels = customLabels.filter(c=>c.id!==id);
+  events = events.map(ev=>({ ...ev, type: ev.type===('cl_'+id) ? 'anders' : ev.type }));
+  renderCustomLabelPanel();
+}
+
+// ── COLOR PICKER ─────────────────────────────────────────────────
+function openColorPicker(e, type, id) {
+  e.stopPropagation();
+  // Remove existing picker
+  document.querySelectorAll('.color-options').forEach(el=>el.remove());
+
+  const swatch = e.currentTarget;
+  const picker = document.createElement('div');
+  picker.className = 'color-options';
+  PALETTE.forEach(c => {
+    const opt = document.createElement('div');
+    opt.className = 'color-opt';
+    opt.style.background = c;
+    const current = type==='subject'
+      ? subjects.find(s=>s.id===id)?.color
+      : customLabels.find(l=>l.id===id)?.color;
+    if (c===current) opt.classList.add('selected');
+    opt.onclick = (ev) => {
+      ev.stopPropagation();
+      if (type==='subject') { const s=subjects.find(s=>s.id===id); if(s) s.color=c; renderSubjectPanel(); }
+      else { const cl=customLabels.find(l=>l.id===id); if(cl) cl.color=c; renderCustomLabelPanel(); }
+      picker.remove();
+    };
+    picker.appendChild(opt);
+  });
+  swatch.parentNode.insertBefore(picker, swatch.nextSibling);
+  document.addEventListener('click', ()=>picker.remove(), {once:true});
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────────
+function checkCode() {
+  const inputEl = document.getElementById('code-input');
+  const input   = inputEl.value.trim();
+  inputEl.classList.remove('error','shake');
+  if (input === CONFIG.schoolCode) {
+    sessionStorage.setItem('sp_auth', CONFIG.schoolCode);
+    showPlanner();
+  } else {
+    document.getElementById('code-error').style.display = 'block';
+    inputEl.classList.add('error');
+    void inputEl.offsetWidth;
+    inputEl.classList.add('shake');
+    inputEl.focus();
+    setTimeout(()=>{ document.getElementById('code-error').style.display='none'; }, 4000);
+  }
+}
+
+function attachLoginListeners() {
+  const btn = document.getElementById('login-btn');
+  const inp = document.getElementById('code-input');
+  if (btn) btn.addEventListener('click', checkCode);
+  if (inp) inp.addEventListener('keydown', e=>{ if(e.key==='Enter') checkCode(); });
+}
+
+function showPlanner() {
+  document.getElementById('login-screen').classList.remove('visible');
+  document.getElementById('controls').style.display  = '';
+  document.getElementById('planner').style.display   = '';
+  document.getElementById('export-bar').style.display = '';
+  loadFromServer();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+if (!CONFIG.schoolCode || CONFIG.schoolCode === 'KIES_EEN_CODE') {
+  document.getElementById('login-screen').innerHTML = `
+    <div class="login-card">
+      <div class="login-logo"><div class="login-logo-icon">⚙️</div></div>
+      <div class="login-eyebrow">Actie vereist</div>
+      <h2 class="login-title">Nog even <span>instellen</span></h2>
+      <p class="login-sub">Vul in <strong>config.js</strong> een leerlingcode in bij <strong>schoolCode</strong>.</p>
+    </div>`;
+  document.getElementById('login-screen').classList.add('visible');
+} else if (sessionStorage.getItem('sp_auth') === CONFIG.schoolCode) {
+  showPlanner();
+} else {
+  attachLoginListeners();
+}
+</script>
+</body>
+</html>
