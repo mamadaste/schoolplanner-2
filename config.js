@@ -8,6 +8,6 @@ window.SP_CONFIG = {
 
   // Kies een unieke leerlingcode per kind
   // Deel dit met je kind — alleen wie dit weet kan de planner zien
-  schoolCode: 'KIES_EEN_CODE',
+  schoolCode: 'TONIC-informed5viable',
 
 };
